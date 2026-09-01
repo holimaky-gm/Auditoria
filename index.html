@@ -105,8 +105,8 @@ font-weight:800;font-size:14.5px;color:var(--gris);line-height:1.15}
 .opt[aria-pressed=true].ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .opt[aria-pressed=true].no{background:var(--no);border-color:var(--no);color:#fff}
 .opt[aria-pressed=true].na{background:var(--na);border-color:var(--na);color:#fff}
-textarea{width:100%;margin-top:11px;padding:12px 68px 12px 12px;border:2px solid var(--linea);
-border-radius:11px;min-height:96px;resize:vertical;background:#fff}
+textarea{width:100%;margin-top:11px;padding:13px;border:2px solid var(--linea);
+border-radius:11px;min-height:104px;resize:vertical;background:#fff;line-height:1.5}
 textarea.exige{border-color:var(--no);background:#FFF5F5}
 .aviso{margin-top:7px;font-size:13.5px;color:var(--no);font-weight:700;display:none}
 .aviso.ver{display:block}
@@ -135,26 +135,6 @@ border-radius:13px;padding:15px;margin-top:12px;font-size:15px;line-height:1.5}
 font-size:14.5px;line-height:1.45}
 #avisoAct button{background:#fff;color:var(--hoja);font-weight:800;padding:9px 15px;
 border-radius:9px;margin-top:9px;font-size:14px}
-/* ---- dictado por voz ---- */
-.caja-obs{position:relative;margin-top:11px}
-.caja-obs textarea{margin-top:0;display:block}
-.mic{position:absolute;right:10px;top:10px;width:48px;height:48px;border-radius:50%;
-background:var(--hoja);color:#fff;display:grid;place-items:center;box-shadow:var(--sombra);
-z-index:2}
-.mic svg{width:22px;height:22px;fill:currentColor}
-.mic[data-esc="1"]{background:var(--no)}
-.mic[data-esc="1"]::after{content:'';position:absolute;inset:-6px;border-radius:50%;
-border:3px solid var(--no);opacity:.45;animation:pulso 1.2s ease-out infinite}
-.mic[disabled]{background:#C8C4BB}
-@keyframes pulso{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1.35);opacity:0}}
-.mic-nota{font-size:13.5px;color:var(--gris);margin-top:9px;line-height:1.45;display:none;
-padding:11px 12px;border-radius:10px;background:#F3F1EA;border:1px solid var(--linea)}
-.mic-nota.ver{display:block}
-.mic-nota b{color:var(--tinta)}
-.mic-nota.oye{background:#FFF1F0;border-color:#F0B4B0;color:#8A241C;font-weight:700}
-.mic-nota.malo{background:#FFF8E6;border-color:var(--sol);color:#6B4A00}
-.mic-nota .cerrar{display:inline-block;margin-top:8px;font-weight:800;font-size:12.5px;
-color:var(--hoja);text-decoration:underline}
 .pantalla{display:none}.pantalla.on{display:block}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -174,7 +154,8 @@ padding:12px 14px;font-size:13.5px;line-height:1.5;color:#7A1C16"></div>
 <section id="pInicio" class="pantalla on">
   <div class="marca"><img id="logoEmp" class="logo" alt="{EMPRESA}"><div class="k">Lista maestra de auditoría</div>
   <h1>Una revisión,<br><em>siete listas</em></h1>
-  <p>Verifique cada punto una sola vez. Al terminar, la aplicación arma sola las siete listas de certificación.</p></div>
+  <p>Verifique cada punto una sola vez. Al terminar, la aplicación arma sola las siete listas de certificación.</p>
+  <p class="hint" style="margin-top:12px">Para describir un hallazgo sin escribir, toque el campo de texto y use el micrófono del teclado del teléfono.</p></div>
   <label>Finca</label>
   <div id="elegida" class="elegida">Ninguna seleccionada</div>
   <button id="cambiarFinca" class="chip" style="display:none;margin-top:9px">Cambiar finca</button>
@@ -198,8 +179,6 @@ padding:12px 14px;font-size:13.5px;line-height:1.5;color:#7A1C16"></div>
   <button class="btn suave" id="btnImportar">Continuar desde un archivo de avance</button>
   <input type="file" id="fileAvance" accept=".json,application/json" style="display:none">
   <div id="resImport"></div>
-  <h2>Dictado por voz</h2>
-  <div id="estVoz" class="aviso-caja"></div>
   <div class="pie-ver"><span id="verTxt"></span><br><span id="verEmp"></span></div>
 </section>
 <section id="pSecciones" class="pantalla">
@@ -392,7 +371,6 @@ function iniInicio(){
   },false);
   pintarFinca(); listarFincas('');
   try{ $('logoEmp').src=APP.logo; }catch(e){}
-  pintarEstadoVoz();
   $('verTxt').textContent='Versión '+APP.version+' · '+APP.fecha;
   $('verEmp').textContent=APP.empresa;
   $('fecha').value=new Date().toISOString().slice(0,10);
@@ -442,47 +420,6 @@ function iniInicio(){
   refrescarSel(); chk();
   $('empezar').onclick=()=>{S.meta={finca:fincaSel,fecha:$('fecha').value,auditor:$('auditor').value.trim()};
     aplicarFiltro(); guardar();verSecciones();};}
-
-function pintarEstadoVoz(){
-  var e=$('estVoz'); if(!e) return;
-  var pie='<br><span style="color:var(--gris)">Siempre puede usar el micrófono del teclado '+
-          'del teléfono: funciona sin señal en cualquier caso.</span>';
-  if(vozMotivo==='' && vozLista){
-    e.innerHTML='<b>Listo para dictar sin señal.</b><br>'+
-      'En los campos de hallazgo verá un botón de micrófono. El reconocimiento ocurre dentro '+
-      'del teléfono, sin enviar nada a internet.'; return;
-  }
-  if(vozMotivo==='descargar'){
-    e.innerHTML='<b>Descargue el español para dictar sin señal.</b><br>'+
-      'Se hace una sola vez, con internet. Después funciona en la finca sin conexión.'+
-      '<br><button class="chip" id="btnIdioma" style="margin-top:10px">Descargar español</button>';
-    var bi=$('btnIdioma'); if(bi) bi.addEventListener('click',function(){ instalarIdioma(bi); },false);
-    return;
-  }
-  if(vozMotivo==='intentar'){
-    e.innerHTML='<b>El botón de micrófono está disponible.</b><br>'+
-      'Este teléfono no informa si puede dictar sin señal. Pruébelo antes de salir a la finca.'+pie;
-    return;
-  }
-  if(vozMotivo==='nolocal'){
-    e.innerHTML='<b>Este teléfono no dicta sin señal dentro de la aplicación.</b>'+pie;
-    return;
-  }
-  if(vozMotivo==='sinapi'){
-    e.innerHTML='<b>Este navegador no permite dictar dentro de la aplicación.</b>'+pie;
-    return;
-  }
-  if(location.protocol==='file:'){
-    e.innerHTML='<b>El dictado necesita que la aplicación esté publicada.</b><br>'+
-      'Abriendo el archivo directamente, el navegador no permite usar el micrófono. '+
-      'Una vez publicada en su dirección web, el botón funcionará.'+pie;
-    return;
-  }
-  e.innerHTML='<b>Prepare el dictado antes de salir a la finca.</b><br>'+
-    'Con señal, compruebe que su teléfono puede dictar sin conexión.'+
-    '<br><button class="chip" id="btnVoz" style="margin-top:10px">Comprobar dictado</button>'+pie;
-  var bv=$('btnVoz'); if(bv) bv.addEventListener('click',function(){ prepararVoz(bv); },false);
-}
 
 function refrescarSel(){
   aplicarFiltro();
@@ -540,9 +477,8 @@ function verCriterios(lugar,bloque){
       '<button class="opt ok" data-e="Cumple" aria-pressed="'+(r.e==='Cumple')+'">Cumple</button>'+
       '<button class="opt no" data-e="No cumple" aria-pressed="'+(r.e==='No cumple')+'">No cumple</button>'+
       '<button class="opt na" data-e="No aplica" aria-pressed="'+(r.e==='No aplica')+'">No aplica<small>no exigible</small></button>'+
-      '</div><div class="caja-obs"><textarea placeholder="Describa lo que encontró"></textarea>'+
-      '<button class="mic" type="button" aria-label="Dictar por voz" data-esc="0">'+iconoMic()+'</button>'+
-      '</div><div class="mic-nota"></div>'+
+      '</div><textarea placeholder="Describa lo que encontró o dicte con el micrófono del teclado" '+
+      'lang="es-CO" inputmode="text" autocapitalize="sentences" autocorrect="on" spellcheck="true"></textarea>'+
       '<div class="aviso">Describa el hallazgo. Este texto va a las listas oficiales.</div>';
     const ta=d.querySelector('textarea'),av=d.querySelector('.aviso');
     ta.value=r.o||'';
@@ -557,9 +493,26 @@ function verCriterios(lugar,bloque){
       S.resp[c.i]=ya?{e:'',o:ta.value,t:Date.now()}:{e:e,o:ta.value,t:Date.now()};
       d.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',String(!ya&&x===b)));
       guardar();pinta();progreso();pie();};});
-    ta.oninput=function(){S.resp[c.i]={e:(S.resp[c.i]||{}).e||'',o:ta.value,t:Date.now()};guardar();pinta();};
-    var mic=d.querySelector('.mic'), nota=d.querySelector('.mic-nota');
-    mic.addEventListener('click',function(ev){ ev.preventDefault(); dictar(mic, ta, nota); },false);
+    var guardarObs=function(){
+      var prev=(S.resp[c.i]||{}).o;
+      if(prev===ta.value) return;
+      S.resp[c.i]={e:(S.resp[c.i]||{}).e||'',o:ta.value,t:Date.now()};
+      guardar(); pinta();
+    };
+    ta.oninput=guardarObs;
+    /* El dictado por voz del teclado no siempre avisa mientras se habla.
+       Se vigila el campo mientras está en uso para no perder nada. */
+    var vig=null;
+    ta.addEventListener('focus',function(){
+      if(vig) clearInterval(vig);
+      vig=setInterval(guardarObs,900);
+    },false);
+    ta.addEventListener('blur',function(){
+      if(vig){ clearInterval(vig); vig=null; }
+      guardarObs();
+    },false);
+    ta.addEventListener('change',guardarObs,false);
+
     cont.appendChild(d);pinta();});
   pie();ir('pCrit',DATA.bloques[bloque],ctxTxt(),()=>verBloques(lugar));}
 function pie(){const cs=porBloque(vista.lugar,vista.bloque);
@@ -943,139 +896,6 @@ function listasAGenerar(){
   return TODAS.filter(l=>sel.indexOf(l)>=0);
 }
 
-
-/* ============================================================
-   DICTADO POR VOZ
-   Condición de trabajo: finca sin señal, guantes, ruido, sol.
-   Estrategia en dos niveles:
-     1) Reconocimiento EN EL DISPOSITIVO (no manda audio a ningún servidor,
-        funciona sin internet). Se pide el paquete de idioma una vez, con señal.
-     2) Si no está disponible, se guía al auditor al micrófono del teclado,
-        que en iPhone y Android moderno también dicta sin conexión.
-   Nunca se usa reconocimiento por internet: en finca no serviría y daría
-   la falsa impresión de que funciona.
-   ============================================================ */
-var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-var vozLista=false, vozMotivo='', recon=null, micActivo=null;
-var IDIOMA='es-CO';
-
-function iconoMic(){
-  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>'+
-         '<path d="M17.3 11a.8.8 0 0 0-1.6 0 3.7 3.7 0 0 1-7.4 0 .8.8 0 0 0-1.6 0 5.3 5.3 0 0 0 4.5 5.2V19H9.5a.8.8 0 0 0 0 1.6h5a.8.8 0 0 0 0-1.6h-1.7v-2.8A5.3 5.3 0 0 0 17.3 11z"/></svg>';
-}
-
-/* ---- ¿se puede dictar sin conexión en este dispositivo? ---- */
-/* Solo se consulta cuando el auditor lo pide expresamente, nunca al abrir la app. */
-function prepararVoz(btn){
-  if(!SR){ vozMotivo='sinapi'; pintarEstadoVoz(); return; }
-  btn.textContent='Comprobando…'; btn.disabled=true;
-  var q=null;
-  try{ if(typeof SR.available==='function') q=SR.available({langs:[IDIOMA], processLocally:true}); }
-  catch(e){ q=null; }
-  if(!q || typeof q.then!=='function'){
-    vozLista=true; vozMotivo='intentar'; pintarEstadoVoz(); return;
-  }
-  q.then(function(e){
-    if(e==='available'){ vozLista=true; vozMotivo=''; pintarEstadoVoz(); return; }
-    if(e==='downloadable'||e==='downloading'){ vozMotivo='descargar'; pintarEstadoVoz(); return; }
-    vozMotivo='nolocal'; pintarEstadoVoz();
-  }).catch(function(){ vozLista=true; vozMotivo='intentar'; pintarEstadoVoz(); });
-}
-
-function instalarIdioma(btn){
-  if(!SR || !SR.install){ return; }
-  btn.textContent='Descargando…'; btn.disabled=true;
-  SR.install({langs:[IDIOMA], processLocally:true}).then(function(ok){
-    if(ok){ vozLista=true; vozMotivo=''; btn.textContent='Listo para usar sin señal'; }
-    else { btn.textContent='No se pudo descargar'; btn.disabled=false; }
-    setTimeout(pintarEstadoVoz,1200);
-  }).catch(function(){ btn.textContent='No se pudo descargar'; btn.disabled=false; });
-}
-
-/* ---- dictar dentro de un campo ---- */
-function contextoSeguro(){
-  if(window.isSecureContext===false) return false;
-  return location.protocol==='https:' || location.hostname==='localhost' ||
-         location.protocol==='http:' ? location.protocol!=='file:' : location.protocol!=='file:';
-}
-function dictar(btn, ta, avisoEl){
-  if(micActivo && micActivo!==btn){ pararDictado(); }
-  if(btn.dataset.esc==='1'){ pararDictado(); return; }
-  limpiarNota(avisoEl);
-  if(location.protocol==='file:'){ mostrarAyudaLocal(avisoEl); return; }
-  if(!SR){ mostrarAyudaTeclado(avisoEl); return; }
-  try{
-    recon = new SR();
-    recon.lang = IDIOMA;
-    recon.continuous = true;
-    recon.interimResults = true;
-    if('processLocally' in recon) recon.processLocally = true;
-    var base = ta.value ? ta.value.replace(/\s+$/,'') + ' ' : '';
-    var firme = '';
-    recon.onresult = function(ev){
-      var interino='';
-      for(var i=ev.resultIndex;i<ev.results.length;i++){
-        var t=ev.results[i][0].transcript;
-        if(ev.results[i].isFinal) firme += t + ' '; else interino += t;
-      }
-      ta.value = base + firme + interino;
-      if(typeof ta.oninput==='function') ta.oninput();
-    };
-    recon.onerror = function(ev){
-      pararDictado();
-      var m = ev && ev.error ? ev.error : '';
-      if(m==='not-allowed' || m==='service-not-allowed') mostrarAyudaPermiso(avisoEl);
-      else if(m==='network') mostrarAyudaSinRed(avisoEl);
-      else if(m==='no-speech') mostrarNota(avisoEl,'<b>No se escuchó nada.</b> Acerque el teléfono a la boca y vuelva a tocar el micrófono.','malo');
-      else if(m==='audio-capture') mostrarNota(avisoEl,'<b>No se pudo usar el micrófono.</b> Verifique que ninguna otra aplicación lo esté ocupando.','malo');
-      else if(m==='language-not-supported') mostrarAyudaTeclado(avisoEl);
-      else if(m==='aborted') limpiarNota(avisoEl);
-      else mostrarAyudaTeclado(avisoEl);
-    };
-    recon.onend = function(){ pararDictado(); };
-    recon.start();
-    btn.dataset.esc='1'; micActivo=btn;
-    mostrarNota(avisoEl,'Escuchando… hable normal. Toque el micrófono otra vez para terminar.','oye');
-  }catch(e){ mostrarAyudaTeclado(avisoEl); }
-}
-function pararDictado(){
-  try{ if(recon) recon.stop(); }catch(e){}
-  recon=null;
-  if(micActivo){ micActivo.dataset.esc='0';
-    var pn=micActivo.parentNode.parentNode;
-    var n=pn?pn.querySelector('.mic-nota'):null;
-    if(n && n.className.indexOf('oye')>=0) limpiarNota(n);
-    micActivo=null; }
-}
-/* Los avisos permanecen hasta que el auditor los cierre o dicte de nuevo. */
-function mostrarNota(el, txt, tipo){
-  if(!el) return;
-  el.className = 'mic-nota ver' + (tipo ? ' ' + tipo : '');
-  el.innerHTML = txt + (tipo==='oye' ? '' :
-    '<br><span class="cerrar">Entendido</span>');
-  var c = el.querySelector('.cerrar');
-  if(c) c.addEventListener('click',function(){ el.className='mic-nota'; el.innerHTML=''; },false);
-}
-function limpiarNota(el){ if(el){ el.className='mic-nota'; el.innerHTML=''; } }
-function mostrarAyudaTeclado(el){
-  mostrarNota(el,'<b>Dicte con el micrófono del teclado.</b><br>'+
-    'Toque el campo de texto y luego el micrófono que aparece en el teclado del teléfono. '+
-    'Escribe igual y funciona sin señal.','malo');
-}
-function mostrarAyudaPermiso(el){
-  mostrarNota(el,'<b>Falta el permiso del micrófono.</b><br>'+
-    'En iPhone: Ajustes, Safari, Micrófono, Permitir. En Android: toque el candado de la barra '+
-    'de direcciones y active el micrófono. También puede usar el micrófono del teclado.','malo');
-}
-function mostrarAyudaSinRed(el){
-  mostrarNota(el,'<b>Este teléfono necesita señal para dictar dentro de la aplicación.</b><br>'+
-    'Use el micrófono del teclado del teléfono: ese sí funciona sin conexión.','malo');
-}
-function mostrarAyudaLocal(el){
-  mostrarNota(el,'<b>El dictado no funciona abriendo el archivo directamente.</b><br>'+
-    'Necesita que la aplicación esté publicada en una dirección web. Mientras tanto, use el '+
-    'micrófono del teclado del teléfono.','malo');
-}
 
 async function generarTodo(){
   const btn=$('generar'), log=$('progresoGen');
