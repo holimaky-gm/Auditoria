@@ -105,8 +105,8 @@ font-weight:800;font-size:14.5px;color:var(--gris);line-height:1.15}
 .opt[aria-pressed=true].ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .opt[aria-pressed=true].no{background:var(--no);border-color:var(--no);color:#fff}
 .opt[aria-pressed=true].na{background:var(--na);border-color:var(--na);color:#fff}
-textarea{width:100%;margin-top:11px;padding:12px 62px 12px 12px;border:2px solid var(--linea);
-border-radius:11px;min-height:92px;resize:vertical;background:#fff}
+textarea{width:100%;margin-top:11px;padding:12px 68px 12px 12px;border:2px solid var(--linea);
+border-radius:11px;min-height:96px;resize:vertical;background:#fff}
 textarea.exige{border-color:var(--no);background:#FFF5F5}
 .aviso{margin-top:7px;font-size:13.5px;color:var(--no);font-weight:700;display:none}
 .aviso.ver{display:block}
@@ -136,18 +136,25 @@ font-size:14.5px;line-height:1.45}
 #avisoAct button{background:#fff;color:var(--hoja);font-weight:800;padding:9px 15px;
 border-radius:9px;margin-top:9px;font-size:14px}
 /* ---- dictado por voz ---- */
-.fila-obs{position:relative}
-.mic{position:absolute;right:9px;bottom:9px;width:46px;height:46px;border-radius:50%;
-background:var(--hoja);color:#fff;display:grid;place-items:center;box-shadow:var(--sombra)}
-.mic svg{width:21px;height:21px;fill:currentColor}
-.mic[data-esc="1"]{background:var(--no);animation:pulso 1.1s ease-in-out infinite}
+.caja-obs{position:relative;margin-top:11px}
+.caja-obs textarea{margin-top:0;display:block}
+.mic{position:absolute;right:10px;top:10px;width:48px;height:48px;border-radius:50%;
+background:var(--hoja);color:#fff;display:grid;place-items:center;box-shadow:var(--sombra);
+z-index:2}
+.mic svg{width:22px;height:22px;fill:currentColor}
+.mic[data-esc="1"]{background:var(--no)}
+.mic[data-esc="1"]::after{content:'';position:absolute;inset:-6px;border-radius:50%;
+border:3px solid var(--no);opacity:.45;animation:pulso 1.2s ease-out infinite}
 .mic[disabled]{background:#C8C4BB}
-@keyframes pulso{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.mic-nota{font-size:12.5px;color:var(--gris);margin-top:6px;line-height:1.4;display:none}
+@keyframes pulso{0%{transform:scale(.9);opacity:.5}100%{transform:scale(1.35);opacity:0}}
+.mic-nota{font-size:13.5px;color:var(--gris);margin-top:9px;line-height:1.45;display:none;
+padding:11px 12px;border-radius:10px;background:#F3F1EA;border:1px solid var(--linea)}
 .mic-nota.ver{display:block}
 .mic-nota b{color:var(--tinta)}
-.oyendo{font-size:13px;color:var(--no);font-weight:700;margin-top:6px;display:none}
-.oyendo.ver{display:block}
+.mic-nota.oye{background:#FFF1F0;border-color:#F0B4B0;color:#8A241C;font-weight:700}
+.mic-nota.malo{background:#FFF8E6;border-color:var(--sol);color:#6B4A00}
+.mic-nota .cerrar{display:inline-block;margin-top:8px;font-weight:800;font-size:12.5px;
+color:var(--hoja);text-decoration:underline}
 .pantalla{display:none}.pantalla.on{display:block}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -465,6 +472,12 @@ function pintarEstadoVoz(){
     e.innerHTML='<b>Este navegador no permite dictar dentro de la aplicación.</b>'+pie;
     return;
   }
+  if(location.protocol==='file:'){
+    e.innerHTML='<b>El dictado necesita que la aplicación esté publicada.</b><br>'+
+      'Abriendo el archivo directamente, el navegador no permite usar el micrófono. '+
+      'Una vez publicada en su dirección web, el botón funcionará.'+pie;
+    return;
+  }
   e.innerHTML='<b>Prepare el dictado antes de salir a la finca.</b><br>'+
     'Con señal, compruebe que su teléfono puede dictar sin conexión.'+
     '<br><button class="chip" id="btnVoz" style="margin-top:10px">Comprobar dictado</button>'+pie;
@@ -527,9 +540,9 @@ function verCriterios(lugar,bloque){
       '<button class="opt ok" data-e="Cumple" aria-pressed="'+(r.e==='Cumple')+'">Cumple</button>'+
       '<button class="opt no" data-e="No cumple" aria-pressed="'+(r.e==='No cumple')+'">No cumple</button>'+
       '<button class="opt na" data-e="No aplica" aria-pressed="'+(r.e==='No aplica')+'">No aplica<small>no exigible</small></button>'+
-      '</div><div class="fila-obs"><textarea placeholder="Describa lo que encontró"></textarea>'+
-      '<button class="mic" type="button" aria-label="Dictar" data-esc="0">'+iconoMic()+'</button>'+
-      '<div class="oyendo"></div><div class="mic-nota"></div></div>'+
+      '</div><div class="caja-obs"><textarea placeholder="Describa lo que encontró"></textarea>'+
+      '<button class="mic" type="button" aria-label="Dictar por voz" data-esc="0">'+iconoMic()+'</button>'+
+      '</div><div class="mic-nota"></div>'+
       '<div class="aviso">Describa el hallazgo. Este texto va a las listas oficiales.</div>';
     const ta=d.querySelector('textarea'),av=d.querySelector('.aviso');
     ta.value=r.o||'';
@@ -545,9 +558,8 @@ function verCriterios(lugar,bloque){
       d.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',String(!ya&&x===b)));
       guardar();pinta();progreso();pie();};});
     ta.oninput=function(){S.resp[c.i]={e:(S.resp[c.i]||{}).e||'',o:ta.value,t:Date.now()};guardar();pinta();};
-    var mic=d.querySelector('.mic'), oye=d.querySelector('.oyendo'), nota=d.querySelector('.mic-nota');
-    mic.addEventListener('click',function(ev){ ev.preventDefault();
-      dictar(mic, ta, mic.dataset.esc==='1'?nota:oye); },false);
+    var mic=d.querySelector('.mic'), nota=d.querySelector('.mic-nota');
+    mic.addEventListener('click',function(ev){ ev.preventDefault(); dictar(mic, ta, nota); },false);
     cont.appendChild(d);pinta();});
   pie();ir('pCrit',DATA.bloques[bloque],ctxTxt(),()=>verBloques(lugar));}
 function pie(){const cs=porBloque(vista.lugar,vista.bloque);
@@ -981,9 +993,16 @@ function instalarIdioma(btn){
 }
 
 /* ---- dictar dentro de un campo ---- */
+function contextoSeguro(){
+  if(window.isSecureContext===false) return false;
+  return location.protocol==='https:' || location.hostname==='localhost' ||
+         location.protocol==='http:' ? location.protocol!=='file:' : location.protocol!=='file:';
+}
 function dictar(btn, ta, avisoEl){
   if(micActivo && micActivo!==btn){ pararDictado(); }
   if(btn.dataset.esc==='1'){ pararDictado(); return; }
+  limpiarNota(avisoEl);
+  if(location.protocol==='file:'){ mostrarAyudaLocal(avisoEl); return; }
   if(!SR){ mostrarAyudaTeclado(avisoEl); return; }
   try{
     recon = new SR();
@@ -1007,38 +1026,55 @@ function dictar(btn, ta, avisoEl){
       var m = ev && ev.error ? ev.error : '';
       if(m==='not-allowed' || m==='service-not-allowed') mostrarAyudaPermiso(avisoEl);
       else if(m==='network') mostrarAyudaSinRed(avisoEl);
-      else if(m==='no-speech') mostrarNota(avisoEl,'No se escuchó nada. Acerque el teléfono y vuelva a intentar.');
+      else if(m==='no-speech') mostrarNota(avisoEl,'<b>No se escuchó nada.</b> Acerque el teléfono a la boca y vuelva a tocar el micrófono.','malo');
+      else if(m==='audio-capture') mostrarNota(avisoEl,'<b>No se pudo usar el micrófono.</b> Verifique que ninguna otra aplicación lo esté ocupando.','malo');
+      else if(m==='language-not-supported') mostrarAyudaTeclado(avisoEl);
+      else if(m==='aborted') limpiarNota(avisoEl);
       else mostrarAyudaTeclado(avisoEl);
     };
     recon.onend = function(){ pararDictado(); };
     recon.start();
     btn.dataset.esc='1'; micActivo=btn;
-    mostrarNota(avisoEl,'Escuchando. Toque el micrófono otra vez para terminar.', true);
+    mostrarNota(avisoEl,'Escuchando… hable normal. Toque el micrófono otra vez para terminar.','oye');
   }catch(e){ mostrarAyudaTeclado(avisoEl); }
 }
 function pararDictado(){
   try{ if(recon) recon.stop(); }catch(e){}
   recon=null;
   if(micActivo){ micActivo.dataset.esc='0';
-    var n=micActivo.parentNode.querySelector('.oyendo'); if(n) n.classList.remove('ver');
+    var pn=micActivo.parentNode.parentNode;
+    var n=pn?pn.querySelector('.mic-nota'):null;
+    if(n && n.className.indexOf('oye')>=0) limpiarNota(n);
     micActivo=null; }
 }
-function mostrarNota(el, txt, oyendo){
+/* Los avisos permanecen hasta que el auditor los cierre o dicte de nuevo. */
+function mostrarNota(el, txt, tipo){
   if(!el) return;
-  el.className = oyendo ? 'oyendo ver' : 'mic-nota ver';
-  el.innerHTML = txt;
+  el.className = 'mic-nota ver' + (tipo ? ' ' + tipo : '');
+  el.innerHTML = txt + (tipo==='oye' ? '' :
+    '<br><span class="cerrar">Entendido</span>');
+  var c = el.querySelector('.cerrar');
+  if(c) c.addEventListener('click',function(){ el.className='mic-nota'; el.innerHTML=''; },false);
 }
+function limpiarNota(el){ if(el){ el.className='mic-nota'; el.innerHTML=''; } }
 function mostrarAyudaTeclado(el){
-  mostrarNota(el,'<b>Use el micrófono del teclado.</b> Toque el campo de texto y luego el '+
-    'micrófono que aparece en el teclado del teléfono. Funciona sin señal.');
+  mostrarNota(el,'<b>Dicte con el micrófono del teclado.</b><br>'+
+    'Toque el campo de texto y luego el micrófono que aparece en el teclado del teléfono. '+
+    'Escribe igual y funciona sin señal.','malo');
 }
 function mostrarAyudaPermiso(el){
-  mostrarNota(el,'<b>Falta permiso del micrófono.</b> Permítalo en los ajustes del navegador '+
-    'para este sitio, o use el micrófono del teclado.');
+  mostrarNota(el,'<b>Falta el permiso del micrófono.</b><br>'+
+    'En iPhone: Ajustes, Safari, Micrófono, Permitir. En Android: toque el candado de la barra '+
+    'de direcciones y active el micrófono. También puede usar el micrófono del teclado.','malo');
 }
 function mostrarAyudaSinRed(el){
-  mostrarNota(el,'<b>Este teléfono necesita señal para dictar.</b> Use el micrófono del teclado, '+
-    'que sí funciona sin conexión.');
+  mostrarNota(el,'<b>Este teléfono necesita señal para dictar dentro de la aplicación.</b><br>'+
+    'Use el micrófono del teclado del teléfono: ese sí funciona sin conexión.','malo');
+}
+function mostrarAyudaLocal(el){
+  mostrarNota(el,'<b>El dictado no funciona abriendo el archivo directamente.</b><br>'+
+    'Necesita que la aplicación esté publicada en una dirección web. Mientras tanto, use el '+
+    'micrófono del teclado del teléfono.','malo');
 }
 
 async function generarTodo(){
